@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <title>Dashboard</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"
+      integrity="sha256-/H4YS+7aYb9kJ5OKhFYPUjSJdrtV6AeyJOtTkw6X72o="
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      $(document).ready(function () {
+        function redirect(url) {
+          var ua = navigator.userAgent.toLowerCase(),
+            isIE = ua.indexOf("msie") !== -1,
+            version = parseInt(ua.substr(4, 2), 10);
+          if (isIE && version < 9) {
+            var link = document.createElement("a");
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+          } else {
+            window.location.href = url;
+          }
+        }
+        var encryptedToken = sessionStorage.getItem("token");
+        if (!encryptedToken.toString()) alert("nothing");
+        let key = prompt(
+          "Enter the secret key\nNote: It should be same as secret key in previous screen!"
+        );
+        // to decrypt the token and store in token variable
+        let bytes = CryptoJS.AES.decrypt(encryptedToken, key);
+        token = bytes.toString(CryptoJS.enc.Utf8);
+        if (!token.toString()) {
+          key = prompt("Please provide correct secret key");
+          token = CryptoJS.AES.decrypt(encryptedToken, key);
+        }
+        console.log(token)
+        if (!token.toString()) {
+          redirect("/user/login");
+        }
+        $.ajax({
+          url: "/user/me",
+          type: "GET",
+          headers: {
+            token: token.toString(),
+          },
+          success: function (res) {
+            $("#myname").html(res.name);
+          },
+          error: (jqXHR, textStatus, errorThrown) => {
+            alert(jqXHR.responseText);
+          },
+        });
+        $("form").submit(function (evt) {
+          evt.preventDefault();
+          var formData = new FormData($(this)[0]);
+          $.ajax({
+            url: "/upload",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            enctype: "multipart/form-data",
+            success: function (response) {
+              imagefun();
+            },
+            error: function (response) {
+              alert(response);
+            },
+          });
+
+          return false;
+        });
+      });
+      $("form").submit(function (evt) {
+        evt.preventDefault();
+        var formData = new FormData($(this)[0]);
+        $.ajax({
+          url: "/upload",
+          type: "POST",
+          data: formData,
+          processData: false,
+          contentType: false,
+          enctype: "multipart/form-data",
+          success: function (response) {
+            imagefun();
+          },
+          error: function (response) {
+            alert(response);
+          },
+        });
+
+        return false;
+      });
+      let count = 0;
+      function addData() {
+        let Wdata = {
+          email: $("#email").val(),
+          password: $("#sendPassword").val(),
+          website: $("#website").val(),
+        };
+        $.ajax({
+          url: "password/store",
+          type: "POST",
+          data: Wdata,
+          headers: {
+            token: token.toString(),
+          },
+          success: function (res) {
+            passwordfun();
+          },
+          error: (jqXHR, textStatus, errorThrown) => {
+            alert(jqXHR.responseText);
+          },
+        });
+      }
+      function passwordfun() {
+        count = 2;
+        document.getElementById("container").innerHTML = "";
+        let html = "";
+        let pass = "";
+        $.ajax({
+          url: "/password/getAllPasswords",
+          type: "POST",
+          headers: {
+            token: token.toString(),
+          },
+          success: function (res) {
+            pass +=
+              '<div class="flex flex-row" style="width=100%">' +
+              '<div class="w-full md:w-full px-3">' +
+              '<label class="uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="Website">' +
+              "Web site" +
+              "</label>" +
+              '<input class="appearance-none w-full bg-gray-50 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="website" type="text" id="website" placeholder="www.google.com"> </input>' +
+              "</div>" +
+              '<div class="w-full md:w-full px-3">' +
+              '<label class="uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="userId">' +
+              "User ID" +
+              "</label>" +
+              '<input class="appearance-none w-full bg-gray-50 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="email" type="text" placeholder="Data Vault"> </input>' +
+              "</div>" +
+              '<div class="w-full md:w-full px-3">' +
+              '<label class="uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="password"> Password' +
+              "</label>" +
+              '<input class="appearance-none  w-full bg-gray-50 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white" id="sendPassword" type="password" placeholder="Password">' +
+              "</div>" +
+              '<div class="w-full md:w-full py-5 pl-7">' +
+              '<label for="nothing" class=""></label>' +
+              '<button style ="background-color: #1F2937;" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"' +
+              'onclick="addData()">' +
+              "Add" +
+              "</button>" +
+              "</div>" +
+              "</div>";
+            if (res[0]) {
+              let blockchain = JSON.parse(res[0].blockchain);
+              blockchain.forEach((value) => {
+                if (value.data.website)
+                  pass +=
+                    "<main>" +
+                    '<div class="mx-auto py-0 pt-9 pb-0 sm:px-6 lg:px-8 ">' +
+                    '<div class="max-w-max rounded-lg overflow-hidden shadow-lg" style="background : #F3F4F6">' +
+                    '<div class="px-4 py-4">' +
+                    '<div class="font-bold text-xl mb-2">' +
+                    "Website : www." +
+                    value.data.website +
+                    "<br/>Email : " +
+                    value.data.email +
+                    "<br/>Password : " +
+                    value.data.password +
+                    "</div>" +
+                    "</div>" +
+                    "</div>" +
+                    "</div>" +
+                    "</main>";
+              });
+            }
+            document.getElementById("container").innerHTML = pass;
+          },
+          error: (jqXHR, textStatus, errorThrown) => {
+            alert(jqXHR.responseText);
+          },
+        });
+      }
+
+      function imagefun() {
+        count = 3;
+        document.getElementById("container").innerHTML = "";
+        let html = "";
+        let img = "";
+        let pass = "";
+        $.ajax({
+          url: "images",
+          type: "GET",
+          headers: {
+            token: token.toString(),
+          },
+          success: function (res) {
+            res.forEach((value) => {
+              img +=
+                "<main>" +
+                '<div class="mx-auto py-0 pt-9 pb-0 sm:px-6 lg:px-8 ">' +
+                '<div class="max-w-max rounded-lg content-around overflow-hidden shadow-lg" style="background : #F3F4F6">' +
+                '<img class="w-full" style="max-width: 400px; max-height: 300px;" src="' +
+                window.location.href +
+                "image/" +
+                value.filename +
+                '" alt="Uploaded Image"> ' +
+                '<div class="">' +
+                '<div class="font-bold text-xl mb-1"> ' +
+                "Md5: " +
+                value.md5 +
+                "<br/>Upload date: " +
+                value.uploadDate.substr(0, 10) +
+                "</div>" +
+                '<p class="text-gray-700 text-base">' +
+                "</p>" +
+                "</div>" +
+                "</div>" +
+                "</main>";
+            });
+            document.getElementById("container").innerHTML = img;
+          },
+          error: (jqXHR, textStatus, errorThrown) => {
+            alert(jqXHR.responseText);
+          },
+        });
+      }
+    </script>
+  </head>
+
+  <body onload="passwordfun()" style="background-color: #e5e7eb">
+    <div class="min-h-full">
+      <header class="bg-white shadow" style="background-color: #9ca3af">
+        <div
+          class="max-w-9xl gap-x-96 mx-auto py-5 px-4 sm:px-6 lg:px-8"
+          style="display: flex; flex-direction: row"
+        >
+          <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <div class="pl-96 place-items-end md:place-items-end">
+            <form>
+              <input
+                class="fas fa-cloud-upload-alt"
+                type="file"
+                name="file"
+                id="file"
+              />
+              <button
+                style="background-color: #1f2937"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+                type="submit"
+              >
+                Upload
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+    </div>
+    <div style="display: flex; flex-direction: row">
+      <div
+        id="Main"
+        class="xl:rounded-r transform xl:translate-x-0 flex items-start h-full w-full sm:w-64 flex-col"
+        style="background-color: #4b5563; height: max-content"
+      >
+        <!-- <img class="rounded-full center pt-20  pl-5 w-4/5 h-4/5" id="myphoto" src="https://i.ibb.co/L1LQtBm/Ellipse-1.png"
+                alt="avatar" /> -->
+
+        <div class="flex justify-center items-center pt-6 space-x-2">
+          <p
+            class="text-lg leading-5 text-white"
+            style="padding-left: 10px"
+            id="myname"
+          ></p>
+        </div>
+        <div
+          class="flex flex-col justify-start items-center px-6 border-b border-gray-600 w-full"
+        >
+          <div
+            class="flex justify-start flex-col w-full md:w-full items-start pb-28 py-11 h-full"
+          >
+            <button
+              class="flex justify-start items-center space-x-6 hover:text-white focus:bg-gray-700 focus:text-white hover:bg-gray-700 text-gray-400 rounded px-3 py-2 w-full md:w-52"
+              onclick="passwordfun()"
+              id="password"
+            >
+              <p class="text-base leading-4">Passwords</p>
+            </button>
+            <button
+              class="flex justify-start items-center space-x-6 hover:text-white focus:bg-gray-700 focus:text-white hover:bg-gray-700 text-gray-400 rounded px-3 py-2 w-full md:w-52"
+              onclick="imagefun()"
+            >
+              <p class="text-base leading-4">Images</p>
+            </button>
+            <!-- <button
+                        class="flex justify-start items-center space-x-6 hover:text-white focus:bg-gray-700 focus:text-white hover:bg-gray-700 text-gray-400 rounded px-3 py-2 w-full md:w-52"
+                        onclick="videofun()">
+                        <p class="text-base leading-4  ">Videos</p>
+                    </button>
+                    <button
+                        class="flex justify-start items-center space-x-6 hover:text-white focus:bg-gray-700 focus:text-white hover:bg-gray-700 text-gray-400 rounded px-3 py-2  w-full md:w-52"
+                        onclick="documentfun()">
+                        <p class="text-base leading-4  ">Documents</p>
+                    </button> -->
+            <button
+              class="flex justify-start items-center space-x-6 hover:text-white focus:bg-gray-700 focus:text-white hover:bg-gray-700 text-gray-400 rounded px-3 py-2 w-full md:w-52"
+            >
+              <p class="text-base leading-4">Log out</p>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div
+        id="container"
+        style="
+          display: flex;
+          background-color: #e5e7eb;
+          flex-wrap: wrap;
+          width: 100%;
+          padding-bottom: 20px;
+          height: 100%;
+        "
+      ></div>
+    </div>
+  </body>
+</html>

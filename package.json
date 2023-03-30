@@ -1,0 +1,33 @@
+{
+  "name": "data-vault",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karanjain-ops/Data-Vault.git"
+  },
+  "author": "Karan, Siddharth, Disha, Lakshay",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/karanjain-ops/Data-Vault.git"
+  },
+  "homepage": "https://github.com/karanjain-ops/Data-Vault.git#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "crypto-js": "^4.1.1",
+    "express": "^4.17.1",
+    "express-validator": "^6.13.0",
+    "formidable": "^2.0.1",
+    "gridfs-stream": "^1.1.1",
+    "jsonwebtoken": "^8.5.1",
+    "method-override": "^2.3.10",
+    "mongoose": "^5.8.2",
+    "multer": "^1.3.0",
+    "multer-gridfs-storage": "^3.0.0"
+  }
+}
